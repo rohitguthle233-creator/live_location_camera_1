@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Live Location & Camera Project</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+
+<style>
+body { font-family: Arial; text-align: center; background:#f2f2f2; padding:20px; }
+video, canvas { width:100%; max-width:320px; border-radius:10px; }
+button { padding:12px 20px; font-size:16px; margin-top:10px; }
+</style>
+</head>
+
+<body>
+
+<h2>Live Location & Camera Capture</h2>
+
+<video id="video" autoplay></video><br>
+<button onclick="capture()">Capture & Send</button>
+
+<canvas id="canvas"></canvas>
+<p id="status">Waiting...</p>
+
+<script>
+emailjs.init("UVAfp9ZIcD5QJYXHi"); // 🔴 replace
+
+let lat, lon;
+
+// camera
+navigator.mediaDevices.getUserMedia({ video: true })
+.then(stream => video.srcObject = stream)
+.catch(() => alert("Camera denied"));
+
+// capture photo
+function capture() {
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext("2d");
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  ctx.drawImage(video, 0, 0);
+  getLocation();
+}
+
+// get location
+function getLocation() {
+  navigator.geolocation.getCurrentPosition(pos => {
+    lat = pos.coords.latitude;
+    lon = pos.coords.longitude;
+    sendEmail();
+  }, () => alert("Location denied"));
+}
+
+// send email
+function sendEmail() {
+  const imageData = canvas.toDataURL("image/jpeg");
+
+  emailjs.send("service_d7wxc5q", "template_84tztib", {
+    latitude: lat,
+    longitude: lon,
+    map_link: `https://maps.google.com/?q=${lat},${lon}`,
+    image: imageData
+  }).then(() => {
+    document.getElementById("status").innerHTML = "✅ Data Sent Successfully";
+  }, () => {
+    document.getElementById("status").innerHTML = "❌ Email Failed";
+  });
+}
+</script>
+
+</body>
+</html>
